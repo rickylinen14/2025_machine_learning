@@ -130,3 +130,41 @@ plt.plot(x_check.detach().numpy(), theoretical_grad, linestyle="dashed", label="
 plt.legend()
 plt.title("ReLU Derivative")
 plt.show()
+
+# =============================
+# Derivative Approximation Error
+# =============================
+
+# True derivative of Runge function
+def runge_derivative(x):
+    return -50 * x / (1 + 25 * x**2)**2
+
+# Convert x into tensor with gradient tracking
+x_tensor_grad = torch.tensor(x, dtype=torch.float32, requires_grad=True)
+y_pred_tensor = net(x_tensor_grad)
+
+# Use autograd to compute derivative of NN prediction
+grads = torch.autograd.grad(outputs=y_pred_tensor,
+                            inputs=x_tensor_grad,
+                            grad_outputs=torch.ones_like(y_pred_tensor),
+                            create_graph=False,
+                            retain_graph=False)[0]
+
+# Convert results
+y_pred_derivative = grads.detach().numpy()
+y_true_derivative = runge_derivative(x)
+
+# Compute derivative approximation errors
+mse_derivative = np.mean((y_true_derivative - y_pred_derivative)**2)
+max_error_derivative = np.max(np.abs(y_true_derivative - y_pred_derivative))
+
+print("Derivative MSE:", mse_derivative)
+print("Derivative Max Error:", max_error_derivative)
+
+# Plot comparison of true vs predicted derivatives
+plt.figure(figsize=(6,4))
+plt.plot(x, y_true_derivative, label="True f'(x)", linewidth=2)
+plt.plot(x, y_pred_derivative, label="NN Approx f'(x)", linestyle="dashed")
+plt.legend()
+plt.title("Runge Derivative Approximation")
+plt.show()
